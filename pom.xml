@@ -47,6 +47,9 @@
          -->
         <guava.version>18.0</guava.version>
 
+        <!-- API DOC module -->
+        <apidoc.version>1.2</apidoc.version>
+
     </properties>
 
     <licenses>
@@ -109,7 +112,7 @@
         <dependency>
             <groupId>com.apporiented</groupId>
             <artifactId>spring-rest-doc</artifactId>
-            <version>${project.version}</version>
+            <version>${apidoc.version}</version>
         </dependency>
 
         <dependency>
