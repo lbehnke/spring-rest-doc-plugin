@@ -4,7 +4,7 @@
 
     <groupId>com.apporiented</groupId>
     <artifactId>spring-rest-doc-plugin</artifactId>
-    <version>1.2.1</version>
+    <version>1.2.2-SNAPSHOT</version>
     <packaging>maven-plugin</packaging>
 
     <name>Spring-REST-Doc Maven Plugin</name>
