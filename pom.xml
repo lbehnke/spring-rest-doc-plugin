@@ -46,7 +46,7 @@
         <guava.version>18.0</guava.version>
 
         <!-- API DOC module -->
-        <apidoc.version>${project.version}</apidoc.version>
+        <apidoc.version>1.4</apidoc.version>
 
     </properties>
 
