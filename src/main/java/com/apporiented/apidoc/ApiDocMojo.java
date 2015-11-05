@@ -1,7 +1,7 @@
 package com.apporiented.apidoc;
 
-import com.apporiented.rest.apidoc.factory.DefaultDocumentationFactory;
 import com.apporiented.rest.apidoc.factory.DocumentationFactory;
+import com.apporiented.rest.apidoc.factory.impl.DefaultDocumentationFactory;
 import com.apporiented.rest.apidoc.model.Documentation;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.databind.*;
@@ -102,7 +102,7 @@ public class ApiDocMojo extends AbstractMojo {
             Files.write(docContent, apiFile, Charsets.UTF_8);
 
 		} catch (Exception e) {
-            getLog().error(e);
+            throw new MojoExecutionException("Creating API documentation failed. Please check apidoc annotations.", e);
 		}
 		
 	}
@@ -114,7 +114,7 @@ public class ApiDocMojo extends AbstractMojo {
             elem = elem.trim();
             if (elem.length() > 0) {
                 packageList.add(elem);
-                getLog().info("Using package " + elem);
+                getLog().info("Registered package " + elem);
             }
         }
         return packageList;
@@ -135,6 +135,6 @@ public class ApiDocMojo extends AbstractMojo {
 
 
     public enum OutputFormat {
-        JSON, XML;
+        JSON, XML
     }
 }
