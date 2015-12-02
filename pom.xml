@@ -4,7 +4,7 @@
 
     <groupId>com.apporiented</groupId>
     <artifactId>spring-rest-doc-plugin</artifactId>
-    <version>1.6-SNAPSHOT</version>
+    <version>1.6</version>
     <packaging>maven-plugin</packaging>
 
     <name>Spring-REST-Doc Maven Plugin</name>
@@ -66,7 +66,7 @@
         <url>https://github.com/lbehnke/spring-rest-doc-plugin</url>
         <connection>scm:git:git://github.com/lbehnke/spring-rest-doc-plugin.git</connection>
         <developerConnection>scm:git:ssh://git@github.com/lbehnke/spring-rest-doc-plugin.git</developerConnection>
-        <tag>HEAD</tag>
+        <tag>v1.6</tag>
     </scm>
 
     <build>
