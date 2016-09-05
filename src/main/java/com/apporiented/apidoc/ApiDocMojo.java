@@ -1,5 +1,8 @@
 package com.apporiented.apidoc;
 
+import com.apporiented.rest.apidoc.annotation.ApiErrorDoc;
+import com.apporiented.rest.apidoc.annotation.ApiErrorsDoc;
+import com.apporiented.rest.apidoc.annotation.ApiMethodDoc;
 import com.apporiented.rest.apidoc.factory.DocumentationFactory;
 import com.apporiented.rest.apidoc.factory.impl.DefaultDocumentationFactory;
 import com.apporiented.rest.apidoc.model.Documentation;
@@ -7,6 +10,7 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.databind.*;
 import com.fasterxml.jackson.module.jaxb.JaxbAnnotationIntrospector;
 import com.google.common.base.Charsets;
+import com.google.common.collect.Lists;
 import com.google.common.io.Files;
 import org.apache.maven.artifact.DependencyResolutionRequiredException;
 import org.apache.maven.plugin.AbstractMojo;
@@ -16,6 +20,9 @@ import org.apache.maven.plugins.annotations.LifecyclePhase;
 import org.apache.maven.plugins.annotations.Mojo;
 import org.apache.maven.plugins.annotations.Parameter;
 import org.apache.maven.project.MavenProject;
+import org.springframework.util.AntPathMatcher;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestMethod;
 
 import javax.xml.bind.Marshaller;
 import java.io.File;
@@ -113,11 +120,28 @@ public class ApiDocMojo extends AbstractMojo {
         for (String elem : elems) {
             elem = elem.trim();
             if (elem.length() > 0) {
-                packageList.add(elem);
+                packageList.addAll(resolvePackageNames(elem));
                 getLog().info("Registered package " + elem);
             }
         }
         return packageList;
+    }
+
+    /**
+     * Returns all packages available to the current classloader.
+     * Alternative way:
+     * See http://stackoverflow.com/questions/259140/scanning-java-annotations-at-runtime
+     * @return The list
+     */
+    protected List<String> resolvePackageNames(String pattern) {
+        List<String> result = new ArrayList<>();
+        AntPathMatcher apm = new AntPathMatcher(".");
+        for(Package p : Package.getPackages()) {
+            if (apm.match(pattern, p.getName())) {
+                result.add(p.getName());
+            }
+        }
+        return result;
     }
 
     private void prepareClasspath() throws DependencyResolutionRequiredException, MalformedURLException {
