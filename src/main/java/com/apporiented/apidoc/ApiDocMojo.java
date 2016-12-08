@@ -12,6 +12,7 @@ import com.fasterxml.jackson.module.jaxb.JaxbAnnotationIntrospector;
 import com.google.common.base.Charsets;
 import com.google.common.collect.Lists;
 import com.google.common.io.Files;
+import com.google.common.reflect.ClassPath;
 import org.apache.maven.artifact.DependencyResolutionRequiredException;
 import org.apache.maven.plugin.AbstractMojo;
 import org.apache.maven.plugin.MojoExecutionException;
@@ -19,7 +20,9 @@ import org.apache.maven.plugin.MojoFailureException;
 import org.apache.maven.plugins.annotations.LifecyclePhase;
 import org.apache.maven.plugins.annotations.Mojo;
 import org.apache.maven.plugins.annotations.Parameter;
+import org.apache.maven.plugins.annotations.ResolutionScope;
 import org.apache.maven.project.MavenProject;
+import org.reflections.Reflections;
 import org.springframework.util.AntPathMatcher;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
@@ -32,27 +35,49 @@ import java.net.URL;
 import java.net.URLClassLoader;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 
-@Mojo(name="apidoc", requiresProject=true, defaultPhase = LifecyclePhase.PREPARE_PACKAGE)
+@Mojo(name="apidoc",
+        requiresProject=true,
+        defaultPhase = LifecyclePhase.PREPARE_PACKAGE,
+        threadSafe = false,
+        requiresDependencyResolution = ResolutionScope.COMPILE)
 public class ApiDocMojo extends AbstractMojo {
 
     @Parameter( defaultValue = "${project}", readonly = true )
-	private MavenProject project;
+    private MavenProject project;
 
     @Parameter( property = "apiVersion", defaultValue = "" )
-	private String apiVersion;
+    private String apiVersion;
 
     @Parameter( property = "apiBaseUrl", required = true )
     private String apiBaseUrl;
 
     @Parameter( property = "apiPackages", required = true )
-	private String apiPackages;
+    private String apiPackages;
 
     @Parameter( property = "apiFormat", defaultValue = "JSON" )
     private OutputFormat apiFormat;
 
     @Parameter( property = "apiFile", defaultValue = "${project.build.directory}/apidoc.json")
     private File apiFile;
+
+
+
+    public ApiDocMojo() {
+        this(null, null, null, null, null, null, null, true);
+    }
+
+    public ApiDocMojo(MavenProject project, String apiVersion, String apiBaseUrl, String apiPackages, OutputFormat apiFormat, File apiFile, JsonInclude.Include outInclude,  boolean outIndent) {
+        this.project = project;
+        this.apiVersion = apiVersion;
+        this.apiBaseUrl = apiBaseUrl;
+        this.apiPackages = apiPackages;
+        this.apiFormat = apiFormat;
+        this.apiFile = apiFile;
+        this.outInclude = outInclude;
+        this.outIndent = outIndent;
+    }
 
     /**
      * Define which documentation properties are to be included
@@ -68,13 +93,21 @@ public class ApiDocMojo extends AbstractMojo {
     private boolean outIndent;
 
     @Override
-	public void execute() throws MojoExecutionException, MojoFailureException {
+    public void execute() throws MojoExecutionException, MojoFailureException {
+        ClassLoader classLoader = getClass().getClassLoader();
+        try {
+            Set<ClassPath.ClassInfo> classesInPackage = ClassPath.from(classLoader).getTopLevelClassesRecursive("de.bdal");
+            for (ClassPath.ClassInfo classInfo : classesInPackage) {
+                classInfo.load();
+            }
+        } catch (Exception e) {
+            throw new MojoExecutionException("Loading classes failed.", e);
+        }
 
-        DocumentationFactory documentationFactory = new DefaultDocumentationFactory();
-
-		try {
+        try {
             /* Create documentation DTO */
-            prepareClasspath();
+            DocumentationFactory documentationFactory = new DefaultDocumentationFactory(new ClassLoader[]{classLoader});
+
             List<String> packageList = getPackageList();
             Documentation doc = documentationFactory.createDocumentation(apiVersion, apiBaseUrl, packageList.toArray(new String[packageList.size()]));
             String docContent = null;
@@ -106,13 +139,14 @@ public class ApiDocMojo extends AbstractMojo {
             }
 
             /* Write to file */
+            apiFile.getParentFile().mkdirs();
             Files.write(docContent, apiFile, Charsets.UTF_8);
 
-		} catch (Exception e) {
+        } catch (Exception e) {
             throw new MojoExecutionException("Creating API documentation failed. Please check apidoc annotations.", e);
-		}
-		
-	}
+        }
+
+    }
 
     private List<String> getPackageList() {
         List<String> packageList = new ArrayList<>();
@@ -133,7 +167,7 @@ public class ApiDocMojo extends AbstractMojo {
      * See http://stackoverflow.com/questions/259140/scanning-java-annotations-at-runtime
      * @return The list
      */
-    protected List<String> resolvePackageNames(String pattern) {
+    protected List<String> resolvePackageNames(String pattern)  {
         List<String> result = new ArrayList<>();
         AntPathMatcher apm = new AntPathMatcher(".");
         for(Package p : Package.getPackages()) {
@@ -144,21 +178,8 @@ public class ApiDocMojo extends AbstractMojo {
         return result;
     }
 
-    private void prepareClasspath() throws DependencyResolutionRequiredException, MalformedURLException {
-        getLog().info("Preparing classpath...");
-        List<String> runtimeClasspathElements = project.getRuntimeClasspathElements();
-        URL[] runtimeClasspathElementsUrls = new URL[runtimeClasspathElements.size()];
-        for (int i = 0; i < runtimeClasspathElementsUrls.length; i++) {
-            String urlStr = runtimeClasspathElements.get(i);
-            getLog().info("   classpath URL: " + urlStr);
-            runtimeClasspathElementsUrls[i] = new File(urlStr).toURI().toURL();
-        }
-        URLClassLoader urlClassLoader = new URLClassLoader(runtimeClasspathElementsUrls, Thread.currentThread().getContextClassLoader());
-        Thread.currentThread().setContextClassLoader(urlClassLoader);
-    }
-
-
     public enum OutputFormat {
         JSON, XML
     }
+
 }

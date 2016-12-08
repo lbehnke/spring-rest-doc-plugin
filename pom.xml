@@ -28,7 +28,11 @@
 
     <properties>
         <github.global.server>github</github.global.server>
+        <mavenVersion>3.2.1</mavenVersion>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <maven.compiler.source>1.8</maven.compiler.source>
+        <maven.compiler.target>1.8</maven.compiler.target>
+
         <!--
             JSON streaming API implementation.
             General data-binding functionality for Jackson: works on core streaming API.
@@ -46,7 +50,7 @@
         <guava.version>18.0</guava.version>
 
         <!-- API DOC module -->
-        <apidoc.version>1.6.1</apidoc.version>
+        <apidoc.version>1.6.2-SNAPSHOT</apidoc.version>
 
     </properties>
 
@@ -72,11 +76,12 @@
     <build>
         <plugins>
             <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-compiler-plugin</artifactId>
                 <version>3.0</version>
                 <configuration>
-                    <source>1.7</source>
-                    <target>1.7</target>
+                    <source>${maven.compiler.source}</source>
+                    <target>${maven.compiler.target}</target>
                 </configuration>
             </plugin>
 
@@ -100,17 +105,17 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-plugin-plugin</artifactId>
-                <version>3.3</version>
+                <version>3.2</version>
                 <configuration>
                     <goalPrefix>apidoc</goalPrefix>
+                    <skipErrorNoDescriptorsFound>true</skipErrorNoDescriptorsFound>
                  </configuration>
                 <executions>
                     <execution>
-                        <id>default-descriptor</id>
+                        <id>mojo-descriptor</id>
                         <goals>
                             <goal>descriptor</goal>
                         </goals>
-                        <phase>process-classes</phase>
                     </execution>
                     <execution>
                         <id>help-descriptor</id>
@@ -182,18 +187,30 @@
         <!-- Maven -->
         <dependency>
             <groupId>org.apache.maven</groupId>
-            <artifactId>maven-core</artifactId>
-            <version>3.0</version>
+            <artifactId>maven-plugin-api</artifactId>
+            <version>${mavenVersion}</version>
         </dependency>
         <dependency>
             <groupId>org.apache.maven</groupId>
-            <artifactId>maven-plugin-api</artifactId>
-            <version>3.0</version>
+            <artifactId>maven-core</artifactId>
+            <version>${mavenVersion}</version>
         </dependency>
         <dependency>
             <groupId>org.apache.maven.plugin-tools</groupId>
             <artifactId>maven-plugin-annotations</artifactId>
             <version>3.2</version>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.maven.plugin-tools</groupId>
+            <artifactId>maven-plugin-annotations</artifactId>
+            <version>3.2</version>
+            <scope>provided</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.maven</groupId>
+            <artifactId>maven-compat</artifactId>
+            <version>3.2.1</version>
+            <scope>test</scope>
         </dependency>
     </dependencies>
 
