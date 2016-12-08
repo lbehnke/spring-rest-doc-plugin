@@ -92,11 +92,24 @@ public class ApiDocMojo extends AbstractMojo {
     @Parameter( property = "apiIndent", defaultValue = "true" )
     private boolean outIndent;
 
+    /**
+     * Pretty print output document.
+     */
+    @Parameter( property = "scanPackage")
+    private String scanPackage;
+
+
     @Override
     public void execute() throws MojoExecutionException, MojoFailureException {
         ClassLoader classLoader = getClass().getClassLoader();
         try {
-            Set<ClassPath.ClassInfo> classesInPackage = ClassPath.from(classLoader).getTopLevelClassesRecursive("de.bdal");
+            Set<ClassPath.ClassInfo> classesInPackage;
+            if (scanPackage == null || scanPackage.length() == 0) {
+                classesInPackage = ClassPath.from(classLoader).getTopLevelClasses();
+            }
+            else {
+                classesInPackage = ClassPath.from(classLoader).getTopLevelClassesRecursive(scanPackage);
+            }
             for (ClassPath.ClassInfo classInfo : classesInPackage) {
                 classInfo.load();
             }
